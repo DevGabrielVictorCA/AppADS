@@ -1,54 +1,347 @@
 import 'package:flutter/material.dart';
+import 'main.dart';
 
+// ================= PÁGINA DE BOAS-VINDAS =================
 class WelcomePage extends StatelessWidget {
   final String nomeDoUsuario;
+  final String tipoUsuario;
 
-  const WelcomePage({super.key, required this.nomeDoUsuario});
+  const WelcomePage({
+    super.key,
+    required this.nomeDoUsuario,
+    required this.tipoUsuario,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (tipoUsuario == "Gestor") {
+      return GestorPage(nomeDoUsuario: nomeDoUsuario);
+    } else {
+      return EntregadorPage(nomeDoUsuario: nomeDoUsuario);
+    }
+  }
+}
+
+// ================= GESTOR =================
+class GestorPage extends StatelessWidget {
+  final String nomeDoUsuario;
+
+  const GestorPage({super.key, required this.nomeDoUsuario});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text ('MyApp', style: TextStyle(color: Colors.white, fontSize: 25)),
-        centerTitle: true,
-        backgroundColor: const Color(0xFF005050),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios),
-          color: Colors.white,
-          onPressed: (){
-            Navigator.pop(context);
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () {
+            Navigator.pop(context); // volta manualmente
           },
         ),
+        title: Text("Olá, $nomeDoUsuario!", style: TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF005050),
+        centerTitle: true,
       ),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Bem-Vindo, $nomeDoUsuario!', 
-                style: TextStyle(
-                  fontSize: 20,
-                  color: Color(0xFF005050),
-                  fontWeight: FontWeight.w400,
-                )
+            Text(
+              "Resumo do dia",
+              style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF005050)),
+            ),
+            const SizedBox(height: 16),
+            // Cards com dados importantes
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                _ResumoCard(title: "Total Entregas", value: "15"),
+                _ResumoCard(title: "Entregas Concluídas", value: "9"),
+                _ResumoCard(title: "Pendentes", value: "6"),
+              ],
             ),
             const SizedBox(height: 20),
-            SizedBox(
-              width: 200,
-              height: 45,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF005050),
-                  foregroundColor: Colors.white,
-                  elevation: 5,
-                ),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text('Sair'),
+            Text(
+              "Alertas recentes",
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF005050)),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: ListView(
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.notification_important, color: Colors.red),
+                    title: Text("Entrega atrasada: Rua C, 789"),
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.notification_important, color: Colors.orange),
+                    title: Text("Nova entrega adicionada: Av. D, 101"),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Botões principais
+            Center(
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _MenuButton(icon: Icons.local_shipping, label: "Entregas"),
+                  _MenuButton(icon: Icons.people, label: "Entregadores"),
+                  _MenuButton(icon: Icons.bar_chart, label: "Relatórios"),
+                  _MenuButton(icon: Icons.notifications, label: "Notificações"),
+                  _MenuButton(icon: Icons.settings, label: "Configuração"),
+                  _MenuButton(
+                    icon: Icons.logout,
+                    label: "Sair",
+                    onTap: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => const LoginPage()),
+                            (route) => false,
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           ],
-        )
+        ),
+      ),
+    );
+  }
+}
+
+class _ResumoCard extends StatelessWidget {
+  final String title;
+  final String value;
+
+  const _ResumoCard({required this.title, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.teal[100],
+      child: SizedBox(
+        width: 120, // largura fixa para padronizar
+        height: 100, // altura fixa para padronizar
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center, // centraliza verticalmente
+            children: [
+              Text(
+                value,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ================= ENTREGADOR =================
+class EntregadorPage extends StatelessWidget {
+  final String nomeDoUsuario;
+
+  const EntregadorPage({super.key, required this.nomeDoUsuario});
+
+  @override
+  Widget build(BuildContext context) {
+    // Simulação de entregas
+    final List<Map<String, dynamic>> entregas = [
+      {
+        "endereco": "Rua A, 123",
+        "status": "Pendente",
+        "horario": "10:00",
+        "destinatario": "João Silva"
+      },
+      {
+        "endereco": "Av. B, 456",
+        "status": "Concluída",
+        "horario": "11:30",
+        "destinatario": "Maria Souza"
+      },
+      {
+        "endereco": "Rua C, 789",
+        "status": "Atrasada",
+        "horario": "14:00",
+        "destinatario": "Carlos Pereira"
+      },
+    ];
+
+    int total = entregas.length;
+    int concluidas = entregas.where((e) => e['status'] == "Concluída").length;
+    int pendentes = total - concluidas;
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: Text("Olá, $nomeDoUsuario!", style: TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF005050),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Center(
+              child: Text(
+                  "Pronto para as entregas de hoje?",
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF005050))),
+            ),
+            const SizedBox(height: 16),
+            // Resumo rápido
+            Card(
+              color: Colors.teal[50],
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Text("Total: $total"),
+                    Text("Concluídas: $concluidas"),
+                    Text("Pendentes: $pendentes"),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView.builder(
+                itemCount: entregas.length,
+                itemBuilder: (context, index) {
+                  final e = entregas[index];
+                  Color cor;
+                  switch (e['status']) {
+                    case "Concluída":
+                      cor = Colors.green;
+                      break;
+                    case "Pendente":
+                      cor = Colors.yellow[700]!;
+                      break;
+                    default:
+                      cor = Colors.red;
+                  }
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.location_on, color: cor),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                  child: Text(e['endereco'],
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold))),
+                              Text(e['status'],
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold, color: cor)),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text("Destinatário: ${e['destinatario']}"),
+                          Text("Horário: ${e['horario']}"),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              ElevatedButton(
+                                  onPressed: () {},
+                                  child: const Text("Detalhes")),
+                              const SizedBox(width: 8),
+                              ElevatedButton(
+                                  onPressed: () {},
+                                  child: const Text("Concluir")),
+                              const SizedBox(width: 8),
+                              ElevatedButton(
+                                  onPressed: () {},
+                                  child: const Text("Problemas")),
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                      (route) => false,
+                );
+              },
+              icon: const Icon(Icons.logout),
+              label: const Text("Sair"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ================= WIDGET AUXILIAR =================
+class _MenuButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  const _MenuButton({required this.icon, required this.label, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 120,
+      height: 120,
+      child: Card(
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(5),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center, // centraliza verticalmente
+              children: [
+                Icon(icon, size: 40, color: Colors.teal),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -5,7 +5,7 @@ void main() {
   runApp(const MyApp());
 }
 
-// Página principal do app (Login)
+// ================= LOGIN PAGE =================
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Página de Login',
+      title: 'Educalog',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF005050)),
       ),
@@ -30,9 +30,11 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // Controllers para capturar os inputs
   final TextEditingController _userController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  String? valorSelecionado;
+  final List<String> opcoes = ['Gestor', 'Entregador'];
 
   @override
   void dispose() {
@@ -44,17 +46,14 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // AppBar
       appBar: AppBar(
         backgroundColor: const Color(0xFF005050),
         title: const Text(
-          'MyApp',
-          style: TextStyle(color: Colors.white, fontSize: 25),
+          'Educalog',
+          style: TextStyle(color: Colors.white, fontSize: 23.5),
         ),
         centerTitle: true,
       ),
-
-      // Body com gradiente
       body: Container(
         padding: const EdgeInsets.all(15),
         decoration: const BoxDecoration(
@@ -77,17 +76,20 @@ class _LoginPageState extends State<LoginPage> {
               style: TextStyle(color: Colors.white, fontSize: 20),
             ),
             const SizedBox(height: 10),
-
-            // Card de login
             LoginCard(
               userController: _userController,
               passwordController: _passwordController,
+              valorSelecionado: valorSelecionado,
+              opcoes: opcoes,
+              onChanged: (novo) {
+                setState(() {
+                  valorSelecionado = novo;
+                });
+              },
             ),
           ],
         ),
       ),
-
-      // Footer
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(20),
         height: 70,
@@ -103,31 +105,33 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-// Widget separado para o card de login
 class LoginCard extends StatelessWidget {
   final TextEditingController userController;
   final TextEditingController passwordController;
+  final String? valorSelecionado;
+  final List<String> opcoes;
+  final void Function(String?) onChanged;
 
   const LoginCard({
     super.key,
     required this.userController,
     required this.passwordController,
+    required this.valorSelecionado,
+    required this.opcoes,
+    required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 350,
+      height: 380,
       child: Card(
         elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               TextField(
                 controller: userController,
@@ -139,7 +143,7 @@ class LoginCard extends StatelessWidget {
                   prefixIcon: Icon(Icons.person),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 15),
               TextField(
                 controller: passwordController,
                 decoration: const InputDecoration(
@@ -152,10 +156,22 @@ class LoginCard extends StatelessWidget {
                 obscureText: true,
               ),
               const SizedBox(height: 16),
+              DropdownButton<String>(
+                value: valorSelecionado,
+                hint: const Text("Selecione o usuário"),
+                isExpanded: true,
+                items: opcoes.map((valor) {
+                  return DropdownMenuItem(
+                    value: valor,
+                    child: Text(valor),
+                  );
+                }).toList(),
+                onChanged: onChanged,
+              ),
+              const SizedBox(height: 20),
               SizedBox(
                 width: 200,
                 height: 45,
-
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF005050),
@@ -163,20 +179,25 @@ class LoginCard extends StatelessWidget {
                     elevation: 5,
                   ),
                   onPressed: () {
-                    String nomeDoUsuario = userController.text.trim();
-                    String senhaDoUsuario = passwordController.text.trim();
+                    final nomeDoUsuario = userController.text.trim();
+                    final senhaDoUsuario = passwordController.text.trim();
 
-                    if (nomeDoUsuario.isEmpty || senhaDoUsuario.isEmpty) {
+                    if (nomeDoUsuario.isEmpty ||
+                        senhaDoUsuario.isEmpty ||
+                        valorSelecionado == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Por Favor, preencha todos os campos!'),
+                          content: Text('Por favor, preencha todos os campos!'),
                         ),
                       );
                     } else {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => WelcomePage(nomeDoUsuario:nomeDoUsuario),
+                          builder: (context) => WelcomePage(
+                            nomeDoUsuario: nomeDoUsuario,
+                            tipoUsuario: valorSelecionado!,
+                          ),
                         ),
                       );
                     }
