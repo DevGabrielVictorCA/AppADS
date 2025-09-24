@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'welcome_page.dart';
+import 'entregas_provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => EntregasProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
-// ================= LOGIN PAGE =================
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -22,6 +28,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// ================= LOGIN PAGE =================
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 

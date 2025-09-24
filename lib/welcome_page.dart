@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'main.dart';
+import 'gestor_entregas.dart';
+import 'package:provider/provider.dart';
+import 'entregas_provider.dart';
 
 // ================= PÁGINA DE BOAS-VINDAS =================
 class WelcomePage extends StatelessWidget {
@@ -35,10 +38,10 @@ class GestorPage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context); // volta manualmente
+            Navigator.pop(context);
           },
         ),
-        title: Text("Olá, $nomeDoUsuario!", style: TextStyle(color: Colors.white)),
+        title: Text("Olá, $nomeDoUsuario!", style: const TextStyle(color: Colors.white)),
         backgroundColor: const Color(0xFF005050),
         centerTitle: true,
       ),
@@ -47,12 +50,9 @@ class GestorPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               "Resumo do dia",
-              style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF005050)),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF005050)),
             ),
             const SizedBox(height: 16),
             // Cards com dados importantes
@@ -67,10 +67,7 @@ class GestorPage extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               "Alertas recentes",
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF005050)),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF005050)),
             ),
             const SizedBox(height: 8),
             Expanded(
@@ -94,7 +91,16 @@ class GestorPage extends StatelessWidget {
                 spacing: 12,
                 runSpacing: 12,
                 children: [
-                  _MenuButton(icon: Icons.local_shipping, label: "Entregas"),
+                  _MenuButton(
+                    icon: Icons.local_shipping,
+                    label: "Entregas",
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const GestorEntregasPage()),
+                      );
+                    },
+                  ),
                   _MenuButton(icon: Icons.people, label: "Entregadores"),
                   _MenuButton(icon: Icons.bar_chart, label: "Relatórios"),
                   _MenuButton(icon: Icons.notifications, label: "Notificações"),
@@ -120,41 +126,6 @@ class GestorPage extends StatelessWidget {
   }
 }
 
-class _ResumoCard extends StatelessWidget {
-  final String title;
-  final String value;
-
-  const _ResumoCard({required this.title, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: Colors.teal[100],
-      child: SizedBox(
-        width: 120, // largura fixa para padronizar
-        height: 100, // altura fixa para padronizar
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center, // centraliza verticalmente
-            children: [
-              Text(
-                value,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 // ================= ENTREGADOR =================
 class EntregadorPage extends StatelessWidget {
   final String nomeDoUsuario;
@@ -163,31 +134,7 @@ class EntregadorPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Simulação de entregas
-    final List<Map<String, dynamic>> entregas = [
-      {
-        "endereco": "Rua A, 123",
-        "status": "Pendente",
-        "horario": "10:00",
-        "destinatario": "João Silva"
-      },
-      {
-        "endereco": "Av. B, 456",
-        "status": "Concluída",
-        "horario": "11:30",
-        "destinatario": "Maria Souza"
-      },
-      {
-        "endereco": "Rua C, 789",
-        "status": "Atrasada",
-        "horario": "14:00",
-        "destinatario": "Carlos Pereira"
-      },
-    ];
-
-    int total = entregas.length;
-    int concluidas = entregas.where((e) => e['status'] == "Concluída").length;
-    int pendentes = total - concluidas;
+    final provider = Provider.of<EntregasProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -197,7 +144,7 @@ class EntregadorPage extends StatelessWidget {
             Navigator.pop(context);
           },
         ),
-        title: Text("Olá, $nomeDoUsuario!", style: TextStyle(color: Colors.white)),
+        title: Text("Olá, $nomeDoUsuario!", style: const TextStyle(color: Colors.white)),
         backgroundColor: const Color(0xFF005050),
         centerTitle: true,
       ),
@@ -208,13 +155,9 @@ class EntregadorPage extends StatelessWidget {
             Center(
               child: Text(
                   "Pronto para as entregas de hoje?",
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF005050))),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF005050))),
             ),
             const SizedBox(height: 16),
-            // Resumo rápido
             Card(
               color: Colors.teal[50],
               child: Padding(
@@ -222,9 +165,9 @@ class EntregadorPage extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    Text("Total: $total"),
-                    Text("Concluídas: $concluidas"),
-                    Text("Pendentes: $pendentes"),
+                    Text("Total: ${provider.entregas.length}"),
+                    Text("Concluídas: ${provider.entregas.where((e) => e['status'] == "Concluída").length}"),
+                    Text("Pendentes: ${provider.entregas.where((e) => e['status'] == "Pendente").length}"),
                   ],
                 ),
               ),
@@ -232,9 +175,9 @@ class EntregadorPage extends StatelessWidget {
             const SizedBox(height: 16),
             Expanded(
               child: ListView.builder(
-                itemCount: entregas.length,
+                itemCount: provider.entregas.length,
                 itemBuilder: (context, index) {
-                  final e = entregas[index];
+                  final e = provider.entregas[index];
                   Color cor;
                   switch (e['status']) {
                     case "Concluída":
@@ -258,12 +201,10 @@ class EntregadorPage extends StatelessWidget {
                               Icon(Icons.location_on, color: cor),
                               const SizedBox(width: 8),
                               Expanded(
-                                  child: Text(e['endereco'],
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold))),
-                              Text(e['status'],
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold, color: cor)),
+                                  child: Text(e['endereco']!,
+                                      style: const TextStyle(fontWeight: FontWeight.bold))),
+                              Text(e['status']!,
+                                  style: TextStyle(fontWeight: FontWeight.bold, color: cor)),
                             ],
                           ),
                           const SizedBox(height: 4),
@@ -273,19 +214,17 @@ class EntregadorPage extends StatelessWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              ElevatedButton(
-                                  onPressed: () {},
-                                  child: const Text("Detalhes")),
+                              ElevatedButton(onPressed: () {}, child: const Text("Detalhes")),
                               const SizedBox(width: 8),
                               ElevatedButton(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    provider.atualizarStatus(index, "Concluída");
+                                  },
                                   child: const Text("Concluir")),
                               const SizedBox(width: 8),
-                              ElevatedButton(
-                                  onPressed: () {},
-                                  child: const Text("Problemas")),
+                              ElevatedButton(onPressed: () {}, child: const Text("Problemas")),
                             ],
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -312,6 +251,35 @@ class EntregadorPage extends StatelessWidget {
 }
 
 // ================= WIDGET AUXILIAR =================
+class _ResumoCard extends StatelessWidget {
+  final String title;
+  final String value;
+
+  const _ResumoCard({required this.title, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.teal[100],
+      child: SizedBox(
+        width: 120,
+        height: 100,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Text(title, textAlign: TextAlign.center),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _MenuButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -330,14 +298,11 @@ class _MenuButton extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(5),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center, // centraliza verticalmente
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(icon, size: 40, color: Colors.teal),
                 const SizedBox(height: 8),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                ),
+                Text(label, textAlign: TextAlign.center),
               ],
             ),
           ),
