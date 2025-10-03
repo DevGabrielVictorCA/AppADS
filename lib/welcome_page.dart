@@ -114,7 +114,7 @@ class GestorPage extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const ContactFormPage()),
+                        MaterialPageRoute(builder: (_) => const ContatosPage()),
                       );
                     },
                   ),

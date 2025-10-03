@@ -2,6 +2,88 @@ import 'package:flutter/material.dart';
 import 'db_helper.dart';
 import 'contact.dart';
 
+class ContatosPage extends StatefulWidget {
+  const ContatosPage({super.key});
+
+  @override
+  State<ContatosPage> createState() => _ContatosPageState();
+}
+
+class _ContatosPageState extends State<ContatosPage> {
+  late DBHelper dbHelper;
+  List<Contact> contatos = [];
+
+  @override
+  void initState() {
+    super.initState();
+    dbHelper = DBHelper();
+    _carregarContatos();
+  }
+
+  Future<void> _carregarContatos() async {
+    final lista = await dbHelper.getContacts();
+    setState(() {
+      contatos = lista;
+    });
+  }
+
+  Future<void> _abrirFormulario({Contact? contato}) async {
+    final resultado = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ContactFormPage(contact: contato),
+      ),
+    );
+    if (resultado == true) {
+      _carregarContatos(); // recarrega a lista se algo foi salvo
+    }
+  }
+
+  Future<void> _excluirContato(Contact contato) async {
+    await dbHelper.deleteContact(contato.id!);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Contato excluído!")),
+    );
+    _carregarContatos();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Contatos"),
+      ),
+      body: ListView.builder(
+        itemCount: contatos.length,
+        itemBuilder: (context, index) {
+          final contato = contatos[index];
+          return ListTile(
+            title: Text(contato.name),
+            subtitle: Text(contato.phone),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => _abrirFormulario(contato: contato),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => _excluirContato(contato),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _abrirFormulario(),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
 class ContactFormPage extends StatefulWidget {
   final Contact? contact;
   const ContactFormPage({super.key, this.contact});
@@ -106,9 +188,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
               ElevatedButton(
                 onPressed: _saveContact,
                 child: _isSaving
-                    ? const CircularProgressIndicator(
-                  color: Colors.white,
-                )
+                    ? const CircularProgressIndicator(color: Colors.white)
                     : const Text("Salvar"),
               ),
             ],

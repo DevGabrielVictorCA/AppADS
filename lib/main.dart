@@ -14,7 +14,6 @@ void main() {
     databaseFactory = databaseFactoryFfi;
   }
 
-  // Mantendo seu ChangeNotifierProvider existente
   runApp(
     ChangeNotifierProvider(
       create: (_) => EntregasProvider(),
