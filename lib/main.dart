@@ -1,9 +1,20 @@
+import 'package:flutter/foundation.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'welcome_page.dart';
 import 'entregas_provider.dart';
 
 void main() {
+  // Inicialização do sqflite para desktop (Windows, Linux, macOS)
+  if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.windows ||
+      defaultTargetPlatform == TargetPlatform.linux ||
+      defaultTargetPlatform == TargetPlatform.macOS)) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+
+  // Mantendo seu ChangeNotifierProvider existente
   runApp(
     ChangeNotifierProvider(
       create: (_) => EntregasProvider(),
@@ -11,6 +22,7 @@ void main() {
     ),
   );
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

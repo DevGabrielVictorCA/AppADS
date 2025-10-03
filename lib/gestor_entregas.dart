@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'entregas_provider.dart';
-import 'criar_entrega.dart';
+import 'add_entrega.dart';
 
 class GestorEntregasPage extends StatelessWidget {
   const GestorEntregasPage({super.key});

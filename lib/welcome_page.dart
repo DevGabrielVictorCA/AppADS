@@ -3,6 +3,8 @@ import 'main.dart';
 import 'gestor_entregas.dart';
 import 'package:provider/provider.dart';
 import 'entregas_provider.dart';
+import 'contatos.dart';
+
 
 // ================= PÁGINA DE BOAS-VINDAS =================
 class WelcomePage extends StatelessWidget {
@@ -105,6 +107,18 @@ class GestorPage extends StatelessWidget {
                   _MenuButton(icon: Icons.bar_chart, label: "Relatórios"),
                   _MenuButton(icon: Icons.notifications, label: "Notificações"),
                   _MenuButton(icon: Icons.settings, label: "Configuração"),
+
+                  _MenuButton(
+                    icon: Icons.contact_page,
+                    label: "Contatos",
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ContactFormPage()),
+                      );
+                    },
+                  ),
+
                   _MenuButton(
                     icon: Icons.logout,
                     label: "Sair",
