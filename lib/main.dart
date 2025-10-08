@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'welcome_page.dart';
 import 'entregas_provider.dart';
+import 'cadastro_page.dart'; // <-- importa a tela de cadastro
 
 void main() {
   // Inicialização do sqflite para desktop (Windows, Linux, macOS)
-  if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.windows ||
-      defaultTargetPlatform == TargetPlatform.linux ||
-      defaultTargetPlatform == TargetPlatform.macOS)) {
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.linux ||
+          defaultTargetPlatform == TargetPlatform.macOS)) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
@@ -21,7 +23,6 @@ void main() {
     ),
   );
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -105,6 +106,7 @@ class _LoginPageState extends State<LoginPage> {
                 });
               },
             ),
+            const SizedBox(height: 15),
           ],
         ),
       ),
@@ -123,7 +125,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-class LoginCard extends StatelessWidget {
+// ================= CARD DE LOGIN =================
+class LoginCard extends StatefulWidget {
   final TextEditingController userController;
   final TextEditingController passwordController;
   final String? valorSelecionado;
@@ -140,6 +143,13 @@ class LoginCard extends StatelessWidget {
   });
 
   @override
+  State<LoginCard> createState() => _LoginCardState();
+}
+
+class _LoginCardState extends State<LoginCard> {
+  bool _isUnderlined = false; // controla o estado do sublinhado
+
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 380,
@@ -152,7 +162,7 @@ class LoginCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TextField(
-                controller: userController,
+                controller: widget.userController,
                 decoration: const InputDecoration(
                   labelText: "Usuário:",
                   border: OutlineInputBorder(
@@ -163,7 +173,7 @@ class LoginCard extends StatelessWidget {
               ),
               const SizedBox(height: 15),
               TextField(
-                controller: passwordController,
+                controller: widget.passwordController,
                 decoration: const InputDecoration(
                   labelText: "Senha:",
                   border: OutlineInputBorder(
@@ -175,16 +185,16 @@ class LoginCard extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               DropdownButton<String>(
-                value: valorSelecionado,
+                value: widget.valorSelecionado,
                 hint: const Text("Selecione o usuário"),
                 isExpanded: true,
-                items: opcoes.map((valor) {
+                items: widget.opcoes.map((valor) {
                   return DropdownMenuItem(
                     value: valor,
                     child: Text(valor),
                   );
                 }).toList(),
-                onChanged: onChanged,
+                onChanged: widget.onChanged,
               ),
               const SizedBox(height: 20),
               SizedBox(
@@ -197,12 +207,12 @@ class LoginCard extends StatelessWidget {
                     elevation: 5,
                   ),
                   onPressed: () {
-                    final nomeDoUsuario = userController.text.trim();
-                    final senhaDoUsuario = passwordController.text.trim();
+                    final nomeDoUsuario = widget.userController.text.trim();
+                    final senhaDoUsuario = widget.passwordController.text.trim();
 
                     if (nomeDoUsuario.isEmpty ||
                         senhaDoUsuario.isEmpty ||
-                        valorSelecionado == null) {
+                        widget.valorSelecionado == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Por favor, preencha todos os campos!'),
@@ -214,13 +224,56 @@ class LoginCard extends StatelessWidget {
                         MaterialPageRoute(
                           builder: (context) => WelcomePage(
                             nomeDoUsuario: nomeDoUsuario,
-                            tipoUsuario: valorSelecionado!,
+                            tipoUsuario: widget.valorSelecionado!,
                           ),
                         ),
                       );
                     }
                   },
                   child: const Text('Login'),
+                ),
+              ),
+
+              const SizedBox(height: 35),
+
+              // ====== BOTÃO DE CADASTRO ======
+              GestureDetector(
+                onTapDown: (_) {
+                  setState(() => _isUnderlined = true);
+                },
+                onTapUp: (_) async {
+                  await Future.delayed(const Duration(milliseconds: 150));
+                  setState(() => _isUnderlined = false);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CadastroPage(),
+                    ),
+                  );
+                },
+                onTapCancel: () {
+                  setState(() => _isUnderlined = false);
+                },
+                child: Text.rich(
+                  TextSpan(
+                    text: "Ainda não tem registro? ",
+                    style: const TextStyle(
+                      color: Color(0xFF212121),
+                      fontSize: 15,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: "Cadastrar",
+                        style: TextStyle(
+                          color: const Color(0xFF005050),
+                          fontWeight: FontWeight.bold,
+                          decoration: _isUnderlined
+                              ? TextDecoration.underline
+                              : TextDecoration.none,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

@@ -4,7 +4,7 @@ import 'gestor_entregas.dart';
 import 'package:provider/provider.dart';
 import 'entregas_provider.dart';
 import 'contatos.dart';
-
+import 'relatorios_gestor.dart';
 
 // ================= PÁGINA DE BOAS-VINDAS =================
 class WelcomePage extends StatelessWidget {
@@ -49,91 +49,60 @@ class GestorPage extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Resumo do dia",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF005050)),
-            ),
-            const SizedBox(height: 16),
-            // Cards com dados importantes
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                _ResumoCard(title: "Total Entregas", value: "15"),
-                _ResumoCard(title: "Entregas Concluídas", value: "9"),
-                _ResumoCard(title: "Pendentes", value: "6"),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Text(
-              "Alertas recentes",
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF005050)),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: ListView(
-                children: [
-                  ListTile(
-                    leading: Icon(Icons.notification_important, color: Colors.red),
-                    title: Text("Entrega atrasada: Rua C, 789"),
-                  ),
-                  ListTile(
-                    leading: Icon(Icons.notification_important, color: Colors.orange),
-                    title: Text("Nova entrega adicionada: Av. D, 101"),
-                  ),
-                ],
+        child: Center(
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _MenuButton(
+                icon: Icons.local_shipping,
+                label: "Entregas",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const GestorEntregasPage()),
+                  );
+                },
               ),
-            ),
-            const SizedBox(height: 16),
-            // Botões principais
-            Center(
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  _MenuButton(
-                    icon: Icons.local_shipping,
-                    label: "Entregas",
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const GestorEntregasPage()),
-                      );
-                    },
-                  ),
-                  _MenuButton(icon: Icons.people, label: "Entregadores"),
-                  _MenuButton(icon: Icons.bar_chart, label: "Relatórios"),
-                  _MenuButton(icon: Icons.notifications, label: "Notificações"),
-                  _MenuButton(icon: Icons.settings, label: "Configuração"),
 
-                  _MenuButton(
-                    icon: Icons.contact_page,
-                    label: "Contatos",
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const ContatosPage()),
-                      );
-                    },
-                  ),
-
-                  _MenuButton(
-                    icon: Icons.logout,
-                    label: "Sair",
-                    onTap: () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (context) => const LoginPage()),
-                            (route) => false,
-                      );
-                    },
-                  ),
-                ],
+              _MenuButton(
+                icon: Icons.bar_chart,
+                label: "Entregadores",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ContatosPage()),
+                  );
+                },
               ),
-            ),
-          ],
+
+              _MenuButton(
+                icon: Icons.insert_chart,
+                label: "Relatórios",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const RelatoriosGestorPage()),
+                  );
+                },
+              ),
+
+              _MenuButton(icon: Icons.notifications, label: "Notificações"),
+              _MenuButton(icon: Icons.settings, label: "Configuração"),
+
+              _MenuButton(
+                icon: Icons.logout,
+                label: "Sair",
+                onTap: () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                        (route) => false,
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -168,8 +137,9 @@ class EntregadorPage extends StatelessWidget {
           children: [
             Center(
               child: Text(
-                  "Pronto para as entregas de hoje?",
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF005050))),
+                "Pronto para as entregas de hoje?",
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF005050)),
+              ),
             ),
             const SizedBox(height: 16),
             Card(
@@ -265,35 +235,6 @@ class EntregadorPage extends StatelessWidget {
 }
 
 // ================= WIDGET AUXILIAR =================
-class _ResumoCard extends StatelessWidget {
-  final String title;
-  final String value;
-
-  const _ResumoCard({required this.title, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: Colors.teal[100],
-      child: SizedBox(
-        width: 120,
-        height: 100,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Text(title, textAlign: TextAlign.center),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _MenuButton extends StatelessWidget {
   final IconData icon;
   final String label;
