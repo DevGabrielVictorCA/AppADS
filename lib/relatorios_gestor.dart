@@ -1,23 +1,42 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'entregas_provider.dart';
+import 'db_helper.dart';
+import 'entrega.dart';
+import 'contact.dart';
 
-// ================= PÁGINA DE RELATÓRIOS =================
-class RelatoriosGestorPage extends StatelessWidget {
+class RelatoriosGestorPage extends StatefulWidget {
   const RelatoriosGestorPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final provider = Provider.of<EntregasProvider>(context);
+  State<RelatoriosGestorPage> createState() => _RelatoriosGestorPageState();
+}
 
-    int total = provider.entregas.length;
-    int concluidas =
-        provider.entregas.where((e) => e['status'] == "Concluída").length;
-    int pendentes =
-        provider.entregas.where((e) => e['status'] == "Pendente").length;
-    int atrasadas =
-        provider.entregas.where((e) => e['status'] == "Atrasada").length;
+class _RelatoriosGestorPageState extends State<RelatoriosGestorPage> {
+  final DBHelper dbHelper = DBHelper();
+  List<Entrega> entregas = [];
+  List<Contact> contatos = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarDados();
+  }
+
+  Future<void> _carregarDados() async {
+    final listaEntregas = await dbHelper.getEntregas();
+    final listaContatos = await dbHelper.getContacts();
+    setState(() {
+      entregas = listaEntregas;
+      contatos = listaContatos;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    int total = entregas.length;
+    int concluidas = entregas.where((e) => e.status == "Concluída").length;
+    int pendentes = entregas.where((e) => e.status == "Pendente").length;
+    int atrasadas = entregas.where((e) => e.status == "Atrasada").length;
 
     List<_ChartData> chartData = [
       _ChartData('Concluídas', concluidas, Colors.green),
@@ -36,26 +55,26 @@ class RelatoriosGestorPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          const Text(
-          "Resumo do dia",
-          style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF005050)),
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              _ResumoCard(title: "Total Entregas", value: "$total"),
-              _ResumoCard(title: "Concluídas", value: "$concluidas"),
-              _ResumoCard(title: "Pendentes", value: "$pendentes"),
-              _ResumoCard(title: "Atrasadas", value: "$atrasadas"),
-            ],
-          ),
-      ),
+            const Text(
+              "Resumo do dia",
+              style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF005050)),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _ResumoCard(title: "Total Entregas", value: "$total"),
+                  _ResumoCard(title: "Concluídas", value: "$concluidas"),
+                  _ResumoCard(title: "Pendentes", value: "$pendentes"),
+                  _ResumoCard(title: "Atrasadas", value: "$atrasadas"),
+                ],
+              ),
+            ),
             const SizedBox(height: 20),
             const Text(
               "Distribuição das entregas",
@@ -94,11 +113,15 @@ class RelatoriosGestorPage extends StatelessWidget {
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: provider.entregas.length,
+              itemCount: entregas.length,
               itemBuilder: (context, index) {
-                final e = provider.entregas[index];
+                final e = entregas[index];
+                final entregador = contatos.firstWhere(
+                        (c) => c.name == e.entregador,
+                    orElse: () => Contact(
+                        name: e.entregador, phone: "", email: "", id: null));
                 Color cor;
-                switch (e['status']) {
+                switch (e.status) {
                   case "Concluída":
                     cor = Colors.green;
                     break;
@@ -116,7 +139,8 @@ class RelatoriosGestorPage extends StatelessWidget {
                   child: ListTile(
                     leading: Icon(Icons.notification_important, color: cor),
                     title: Text(
-                        "${e['status']}: ${e['endereco']} - ${e['destinatario']}"),
+                        "${e.status}: ${e.destino} - ${e.receptor}"),
+                    subtitle: Text("Entregador: ${entregador.name}"),
                   ),
                 );
               },
@@ -128,7 +152,6 @@ class RelatoriosGestorPage extends StatelessWidget {
   }
 }
 
-// ================= CLASSES AUXILIARES =================
 class _ResumoCard extends StatelessWidget {
   final String title;
   final String value;

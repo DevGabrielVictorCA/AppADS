@@ -1,115 +1,113 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'entregas_provider.dart';
+import 'db_helper.dart';
+import 'entrega.dart';
 import 'add_entrega.dart';
 
-class GestorEntregasPage extends StatelessWidget {
+class GestorEntregasPage extends StatefulWidget {
   const GestorEntregasPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final provider = Provider.of<EntregasProvider>(context);
+  State<GestorEntregasPage> createState() => _GestorEntregasPageState();
+}
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        title: const Text("Entregas", style: TextStyle(color: Colors.white)),
-        backgroundColor: const Color(0xFF005050),
+class _GestorEntregasPageState extends State<GestorEntregasPage> {
+  final DBHelper dbHelper = DBHelper();
+  List<Entrega> entregas = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarEntregas();
+  }
+
+  Future<void> _carregarEntregas() async {
+    final lista = await dbHelper.getEntregas();
+    setState(() {
+      entregas = lista;
+    });
+  }
+
+  Future<void> _abrirEntrega({Entrega? entrega}) async {
+    final resultado = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddEntregaPage(entrega: entrega),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            ElevatedButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text("Criar Nova Entrega"),
-              onPressed: () async {
-                final novaEntrega =
-                await Navigator.push<Map<String, String>>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const CriarEntregaPage(),
-                  ),
-                );
+    );
+    if (resultado == true) {
+      _carregarEntregas();
+    }
+  }
 
-                if (novaEntrega != null) {
-                  provider.adicionarEntrega(novaEntrega);
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                itemCount: provider.entregas.length,
-                itemBuilder: (context, index) {
-                  final e = provider.entregas[index];
-                  Color cor;
-                  switch (e['status']) {
-                    case "Concluída":
-                      cor = Colors.green;
-                      break;
-                    case "Pendente":
-                      cor = Colors.yellow[700]!;
-                      break;
-                    default:
-                      cor = Colors.red;
-                  }
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.location_on, color: cor),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                  child: Text(e['endereco']!,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold))),
-                              Text(e['status']!,
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold, color: cor)),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text("Destinatário: ${e['destinatario']}"),
-                          Text("Horário: ${e['horario']}"),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              ElevatedButton(
-                                  onPressed: () {},
-                                  child: const Text("Detalhes")),
-                              const SizedBox(width: 8),
-                              ElevatedButton(
-                                  onPressed: () {
-                                    provider.atualizarStatus(index, "Concluída");
-                                  },
-                                  child: const Text("Concluir")),
-                              const SizedBox(width: 8),
-                              ElevatedButton(
-                                  onPressed: () {},
-                                  child: const Text("Problemas")),
-                            ],
-                          )
-                        ],
-                      ),
-                    ),
-                  );
-                },
+  Future<void> _deletarEntrega(int id) async {
+    await dbHelper.deleteEntrega(id);
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text("Entrega deletada!")));
+    _carregarEntregas();
+  }
+
+  Future<void> _atualizarConcluida(Entrega entrega, bool valor) async {
+    entrega.concluida = valor;
+    if (valor) {
+      entrega.status = "Concluída";
+    } else {
+      final agora = DateTime.now();
+      final dataEntrega = DateTime.tryParse(entrega.dataEntrega);
+      if (dataEntrega != null && dataEntrega.isBefore(agora)) {
+        entrega.status = "Atrasada";
+      } else {
+        entrega.status = "Pendente";
+      }
+    }
+    await dbHelper.updateEntrega(entrega);
+    _carregarEntregas();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Gestor de Entregas")),
+      body: ListView.builder(
+        itemCount: entregas.length,
+        itemBuilder: (context, index) {
+          final e = entregas[index];
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+            child: ListTile(
+              title: Text(e.produto),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Destino: ${e.destino}"),
+                  Text("Entregador: ${e.entregador}"),
+                  Text("Status: ${e.status}"),
+                ],
+              ),
+              isThreeLine: true,
+              leading: Checkbox(
+                value: e.concluida,
+                onChanged: (valor) => _atualizarConcluida(e, valor!),
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () => _abrirEntrega(entrega: e),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _deletarEntrega(e.id!),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _abrirEntrega(),
+        child: const Icon(Icons.add),
       ),
     );
   }
