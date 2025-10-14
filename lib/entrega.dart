@@ -1,5 +1,5 @@
 class Entrega {
-  int? id; // corrigido para int?
+  int? id;
   String produto;
   String destino;
   String receptor;
@@ -16,7 +16,7 @@ class Entrega {
     required this.entregador,
     required this.dataEntrega,
     required this.status,
-    required this.concluida,
+    this.concluida = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -27,11 +27,9 @@ class Entrega {
       'entregador': entregador,
       'dataEntrega': dataEntrega,
       'status': status,
-      'concluida': concluida ? 1 : 0, // SQLite não tem bool
+      'concluida': concluida ? 1 : 0,
     };
-    if (id != null) {
-      map['id'] = id;
-    }
+    if (id != null) map['id'] = id;
     return map;
   }
 

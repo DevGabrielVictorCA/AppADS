@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'db_helper.dart';
-import 'entrega.dart';
-import 'contact.dart';
+import 'models.dart';
+import 'gestor_entregas.dart';
 
 class RelatoriosGestorPage extends StatefulWidget {
   const RelatoriosGestorPage({super.key});
@@ -14,7 +14,8 @@ class RelatoriosGestorPage extends StatefulWidget {
 class _RelatoriosGestorPageState extends State<RelatoriosGestorPage> {
   final DBHelper dbHelper = DBHelper();
   List<Entrega> entregas = [];
-  List<Contact> contatos = [];
+  List<Entregador> entregadores = [];
+  List<Receptor> receptores = [];
 
   @override
   void initState() {
@@ -24,10 +25,12 @@ class _RelatoriosGestorPageState extends State<RelatoriosGestorPage> {
 
   Future<void> _carregarDados() async {
     final listaEntregas = await dbHelper.getEntregas();
-    final listaContatos = await dbHelper.getContacts();
+    final listaEntregadores = await dbHelper.getEntregadores();
+    final listaReceptores = await dbHelper.getReceptores();
     setState(() {
       entregas = listaEntregas;
-      contatos = listaContatos;
+      entregadores = listaEntregadores;
+      receptores = listaReceptores;
     });
   }
 
@@ -116,10 +119,29 @@ class _RelatoriosGestorPageState extends State<RelatoriosGestorPage> {
               itemCount: entregas.length,
               itemBuilder: (context, index) {
                 final e = entregas[index];
-                final entregador = contatos.firstWhere(
-                        (c) => c.name == e.entregador,
-                    orElse: () => Contact(
-                        name: e.entregador, phone: "", email: "", id: null));
+
+                final entregador = entregadores.firstWhere(
+                      (en) => en.name == e.entregador,
+                  orElse: () => Entregador(
+                    id: null,
+                    name: e.entregador ?? '',
+                    phone: '',
+                    email: '',
+                    address: '',
+                  ),
+                );
+
+                final receptor = receptores.firstWhere(
+                      (r) => r.name == e.receptor,
+                  orElse: () => Receptor(
+                    id: null,
+                    name: e.receptor ?? '',
+                    phone: '',
+                    email: '',
+                    address: '',
+                  ),
+                );
+
                 Color cor;
                 switch (e.status) {
                   case "Concluída":
@@ -134,13 +156,23 @@ class _RelatoriosGestorPageState extends State<RelatoriosGestorPage> {
                   default:
                     cor = Colors.grey;
                 }
+
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 6),
                   child: ListTile(
                     leading: Icon(Icons.notification_important, color: cor),
-                    title: Text(
-                        "${e.status}: ${e.destino} - ${e.receptor}"),
-                    subtitle: Text("Entregador: ${entregador.name}"),
+                    title: Text("${e.status}: ${e.destino}"),
+                    subtitle: Text(
+                        "Produto: ${e.produto}"),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              GestorEntregasPage(entregaSelecionadaId: e.id),
+                        ),
+                      );
+                    },
                   ),
                 );
               },

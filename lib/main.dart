@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'welcome_page.dart';
 import 'entregas_provider.dart';
-import 'cadastro_page.dart'; // <-- importa a tela de cadastro
+import 'cadastro_page.dart';
+import 'db_helper.dart';
 
 void main() {
   // Inicialização do sqflite para desktop (Windows, Linux, macOS)
@@ -49,17 +51,51 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _userController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  String? valorSelecionado;
-  final List<String> opcoes = ['Gestor', 'Entregador'];
+  String? tipoUsuarioSelecionado;
+  final List<String> opcoes = ['Gestor', 'Entregador', 'Receptor'];
+  bool _obscureSenha = true;
 
   @override
   void dispose() {
-    _userController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fazerLogin() async {
+    final email = _emailController.text.trim();
+    final senha = _passwordController.text.trim();
+    final tipo = tipoUsuarioSelecionado;
+
+    if (email.isEmpty || senha.isEmpty || tipo == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, preencha todos os campos!')),
+      );
+      return;
+    }
+
+    final db = DBHelper();
+    final usuario = await db.autenticarUsuario(email, senha);
+
+    if (usuario != null && usuario['tipoUsuario'] == tipo) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => WelcomePage(
+            nomeDoUsuario: usuario['nome']?.toString() ?? '',
+            tipoUsuario: usuario['tipoUsuario']?.toString() ?? '',
+          ),
+        ),
+      );
+
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Usuário ou senha incorretos!')),
+      );
+    }
   }
 
   @override
@@ -87,26 +123,45 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
               'Bem-Vindo!',
               style: TextStyle(color: Colors.white, fontSize: 20),
             ),
+
+            // Botão Limpar Dados
+            const SizedBox(height: 20),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final db = DBHelper();
+                await db.limparTudo();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Todos os usuários foram apagados!')),
+                );
+              },
+              child: const Text('Limpar usuários (teste)'),
+            ),
+
+
             const SizedBox(height: 10),
             LoginCard(
-              userController: _userController,
+              emailController: _emailController,
               passwordController: _passwordController,
-              valorSelecionado: valorSelecionado,
+              valorSelecionado: tipoUsuarioSelecionado,
               opcoes: opcoes,
               onChanged: (novo) {
                 setState(() {
-                  valorSelecionado = novo;
+                  tipoUsuarioSelecionado = novo;
                 });
               },
+              onLoginPressed: _fazerLogin,
             ),
-            const SizedBox(height: 15),
           ],
         ),
       ),
@@ -127,19 +182,21 @@ class _LoginPageState extends State<LoginPage> {
 
 // ================= CARD DE LOGIN =================
 class LoginCard extends StatefulWidget {
-  final TextEditingController userController;
+  final TextEditingController emailController;
   final TextEditingController passwordController;
   final String? valorSelecionado;
   final List<String> opcoes;
   final void Function(String?) onChanged;
+  final VoidCallback onLoginPressed;
 
   const LoginCard({
     super.key,
-    required this.userController,
+    required this.emailController,
     required this.passwordController,
     required this.valorSelecionado,
     required this.opcoes,
     required this.onChanged,
+    required this.onLoginPressed,
   });
 
   @override
@@ -147,7 +204,8 @@ class LoginCard extends StatefulWidget {
 }
 
 class _LoginCardState extends State<LoginCard> {
-  bool _isUnderlined = false; // controla o estado do sublinhado
+  bool _obscureSenha = true;
+  bool _isUnderlined = false;
 
   @override
   Widget build(BuildContext context) {
@@ -162,9 +220,10 @@ class _LoginCardState extends State<LoginCard> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TextField(
-                controller: widget.userController,
+                controller: widget.emailController,
+                keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
-                  labelText: "Usuário:",
+                  labelText: "Email",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(20)),
                   ),
@@ -174,17 +233,24 @@ class _LoginCardState extends State<LoginCard> {
               const SizedBox(height: 15),
               TextField(
                 controller: widget.passwordController,
-                decoration: const InputDecoration(
-                  labelText: "Senha:",
-                  border: OutlineInputBorder(
+                obscureText: _obscureSenha,
+                decoration: InputDecoration(
+                  labelText: "Senha",
+                  border: const OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(20)),
                   ),
-                  prefixIcon: Icon(Icons.lock),
+                  prefixIcon: const Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                        _obscureSenha ? Icons.visibility_off : Icons.visibility),
+                    onPressed: () {
+                      setState(() => _obscureSenha = !_obscureSenha);
+                    },
+                  ),
                 ),
-                obscureText: true,
               ),
               const SizedBox(height: 16),
-              DropdownButton<String>(
+              DropdownButtonFormField<String>(
                 value: widget.valorSelecionado,
                 hint: const Text("Selecione o usuário"),
                 isExpanded: true,
@@ -206,54 +272,22 @@ class _LoginCardState extends State<LoginCard> {
                     foregroundColor: Colors.white,
                     elevation: 5,
                   ),
-                  onPressed: () {
-                    final nomeDoUsuario = widget.userController.text.trim();
-                    final senhaDoUsuario = widget.passwordController.text.trim();
-
-                    if (nomeDoUsuario.isEmpty ||
-                        senhaDoUsuario.isEmpty ||
-                        widget.valorSelecionado == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Por favor, preencha todos os campos!'),
-                        ),
-                      );
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => WelcomePage(
-                            nomeDoUsuario: nomeDoUsuario,
-                            tipoUsuario: widget.valorSelecionado!,
-                          ),
-                        ),
-                      );
-                    }
-                  },
+                  onPressed: widget.onLoginPressed,
                   child: const Text('Login'),
                 ),
               ),
-
               const SizedBox(height: 35),
-
-              // ====== BOTÃO DE CADASTRO ======
               GestureDetector(
-                onTapDown: (_) {
-                  setState(() => _isUnderlined = true);
-                },
+                onTapDown: (_) => setState(() => _isUnderlined = true),
                 onTapUp: (_) async {
                   await Future.delayed(const Duration(milliseconds: 150));
                   setState(() => _isUnderlined = false);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const CadastroPage(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const CadastroPage()),
                   );
                 },
-                onTapCancel: () {
-                  setState(() => _isUnderlined = false);
-                },
+                onTapCancel: () => setState(() => _isUnderlined = false),
                 child: Text.rich(
                   TextSpan(
                     text: "Ainda não tem registro? ",
