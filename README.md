@@ -122,16 +122,6 @@ Contém as páginas principais de cada tipo de usuário:
 
 ---
 
-## 📋 Tarefas Pendentes
-
-1. Criar `ReceptorPage`.
-2. Integrar `EntregasProvider` com SQLite.
-3. Sistema de login e cadastro funcional.
-4. Conectar ações do gestor às páginas dos entregadores e receptores.
-5. Refinar layout e navegação.
-
----
-
 ## 🧠 Resumo Técnico
 
 * **Linguagem:** Dart (Flutter)
