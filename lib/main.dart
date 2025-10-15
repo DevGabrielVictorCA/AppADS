@@ -8,7 +8,7 @@ import 'entregas_provider.dart';
 import 'cadastro_page.dart';
 import 'db_helper.dart';
 
-void main() {
+Future<void> main() async {
   // Inicialização do sqflite para desktop (Windows, Linux, macOS)
   if (!kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.windows ||
@@ -18,9 +18,13 @@ void main() {
     databaseFactory = databaseFactoryFfi;
   }
 
+  WidgetsFlutterBinding.ensureInitialized();
+  final dbHelper = DBHelper();
+  await dbHelper.inserirUsuariosPadrao();
+
   runApp(
     ChangeNotifierProvider(
-      create: (_) => EntregasProvider(),
+      create: (_) => EntregasProvider()..carregarEntregas(),
       child: const MyApp(),
     ),
   );
@@ -80,17 +84,17 @@ class _LoginPageState extends State<LoginPage> {
     final db = DBHelper();
     final usuario = await db.autenticarUsuario(email, senha);
 
-    if (usuario != null && usuario['tipoUsuario'] == tipo) {
+    if (usuario != null && usuario['tipoUsuario'].toString().toLowerCase() == tipo.toLowerCase()) {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => WelcomePage(
             nomeDoUsuario: usuario['nome']?.toString() ?? '',
             tipoUsuario: usuario['tipoUsuario']?.toString() ?? '',
+            emailUsuario: email,
           ),
         ),
       );
-
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Usuário ou senha incorretos!')),
@@ -130,25 +134,6 @@ class _LoginPageState extends State<LoginPage> {
               'Bem-Vindo!',
               style: TextStyle(color: Colors.white, fontSize: 20),
             ),
-
-            // Botão Limpar Dados
-            const SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () async {
-                final db = DBHelper();
-                await db.limparTudo();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Todos os usuários foram apagados!')),
-                );
-              },
-              child: const Text('Limpar usuários (teste)'),
-            ),
-
-
             const SizedBox(height: 10),
             LoginCard(
               emailController: _emailController,
@@ -162,6 +147,34 @@ class _LoginPageState extends State<LoginPage> {
               },
               onLoginPressed: _fazerLogin,
             ),
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Text(
+                '📋 Logins disponíveis localmente:\n\n'
+                    '👑 Gestor: NUMERODERA@admin.com\n'
+                    '🚚 Entregador: NUMERODERA@entregador.com\n'
+                    '📦 Receptor: NUMERODERA@cliente.com\n\n'
+                    '🔐 Senha para todos: 123456',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+            ),
+
+            // Botão Limpar Dados
+            /* const SizedBox(height: 20),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final db = DBHelper();
+                await db.limparTudo();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Todos os usuários foram apagados!')),
+                );
+              },
+              child: const Text('Limpar usuários (teste)'),
+            ), */
           ],
         ),
       ),

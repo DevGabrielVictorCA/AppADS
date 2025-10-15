@@ -48,7 +48,14 @@ class _EntregadoresPageState extends State<EntregadoresPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Entregadores")),
+      appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          backgroundColor: const Color(0xFF005050),
+          title: const Text("Entregadores", style: TextStyle(color: Colors.white),)
+      ),
       body: ListView.builder(
         itemCount: entregadores.length,
         itemBuilder: (context, index) {
@@ -62,7 +69,7 @@ class _EntregadoresPageState extends State<EntregadoresPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.blue),
+                    icon: const Icon(Icons.edit, color: Color(0xFF005050)),
                     onPressed: () => _abrirFormulario(entregador: e),
                   ),
                   IconButton(
@@ -76,8 +83,9 @@ class _EntregadoresPageState extends State<EntregadoresPage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Color(0xFF005050),
         onPressed: () => _abrirFormulario(),
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

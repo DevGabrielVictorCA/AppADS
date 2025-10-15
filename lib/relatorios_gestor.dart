@@ -5,7 +5,9 @@ import 'models.dart';
 import 'gestor_entregas.dart';
 
 class RelatoriosGestorPage extends StatefulWidget {
-  const RelatoriosGestorPage({super.key});
+  final bool scrollParaAlertas;
+
+  const RelatoriosGestorPage({super.key, this.scrollParaAlertas = false});
 
   @override
   State<RelatoriosGestorPage> createState() => _RelatoriosGestorPageState();
@@ -17,10 +19,18 @@ class _RelatoriosGestorPageState extends State<RelatoriosGestorPage> {
   List<Entregador> entregadores = [];
   List<Receptor> receptores = [];
 
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _alertasKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
     _carregarDados();
+
+    // rolar para alertas se solicitado
+    if (widget.scrollParaAlertas) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToAlertas());
+    }
   }
 
   Future<void> _carregarDados() async {
@@ -32,6 +42,18 @@ class _RelatoriosGestorPageState extends State<RelatoriosGestorPage> {
       entregadores = listaEntregadores;
       receptores = listaReceptores;
     });
+  }
+
+  void _scrollToAlertas() {
+    final context = _alertasKey.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+        alignment: 0,
+      );
+    }
   }
 
   @override
@@ -49,11 +71,17 @@ class _RelatoriosGestorPageState extends State<RelatoriosGestorPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Relatórios"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+
+        title: const Text("Relatórios", style: const TextStyle(color: Colors.white)),
         backgroundColor: const Color(0xFF005050),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
+        controller: _scrollController,
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,9 +89,10 @@ class _RelatoriosGestorPageState extends State<RelatoriosGestorPage> {
             const Text(
               "Resumo do dia",
               style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF005050)),
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF005050),
+              ),
             ),
             const SizedBox(height: 16),
             Center(
@@ -82,17 +111,19 @@ class _RelatoriosGestorPageState extends State<RelatoriosGestorPage> {
             const Text(
               "Distribuição das entregas",
               style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF005050)),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF005050),
+              ),
             ),
             const SizedBox(height: 8),
             SizedBox(
               height: 250,
               child: SfCircularChart(
                 legend: Legend(
-                    isVisible: true,
-                    overflowMode: LegendItemOverflowMode.wrap),
+                  isVisible: true,
+                  overflowMode: LegendItemOverflowMode.wrap,
+                ),
                 series: <PieSeries<_ChartData, String>>[
                   PieSeries<_ChartData, String>(
                     dataSource: chartData,
@@ -105,12 +136,17 @@ class _RelatoriosGestorPageState extends State<RelatoriosGestorPage> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              "Alertas recentes",
-              style: TextStyle(
+            // ALERTAS RECENTES
+            Container(
+              key: _alertasKey,
+              child: const Text(
+                "Alertas recentes",
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF005050)),
+                  color: Color(0xFF005050),
+                ),
+              ),
             ),
             const SizedBox(height: 8),
             ListView.builder(
@@ -124,7 +160,7 @@ class _RelatoriosGestorPageState extends State<RelatoriosGestorPage> {
                       (en) => en.name == e.entregador,
                   orElse: () => Entregador(
                     id: null,
-                    name: e.entregador ?? '',
+                    name: e.entregador,
                     phone: '',
                     email: '',
                     address: '',
@@ -135,7 +171,7 @@ class _RelatoriosGestorPageState extends State<RelatoriosGestorPage> {
                       (r) => r.name == e.receptor,
                   orElse: () => Receptor(
                     id: null,
-                    name: e.receptor ?? '',
+                    name: e.receptor,
                     phone: '',
                     email: '',
                     address: '',
@@ -143,33 +179,41 @@ class _RelatoriosGestorPageState extends State<RelatoriosGestorPage> {
                 );
 
                 Color cor;
-                switch (e.status) {
-                  case "Concluída":
-                    cor = Colors.green;
-                    break;
-                  case "Pendente":
-                    cor = Colors.orange;
-                    break;
-                  case "Atrasada":
-                    cor = Colors.red;
-                    break;
-                  default:
-                    cor = Colors.grey;
+                String subtitleText;
+
+                if (e.status == "Problema reportado") {
+                  cor = Colors.redAccent;
+                  subtitleText =
+                  "Produto: ${e.produto}\nEntregador: ${entregador.name}\nReceptor: ${receptor.name}\n\n🚨 Motivo: ${e.motivos ?? 'Não informado'}\nDescrição: ${e.descricao ?? 'Não informada'}";
+                } else {
+                  switch (e.status) {
+                    case "Concluída":
+                      cor = Colors.green;
+                      break;
+                    case "Pendente":
+                      cor = Colors.orange;
+                      break;
+                    case "Atrasada":
+                      cor = Colors.red;
+                      break;
+                    default:
+                      cor = Colors.grey;
+                  }
+                  subtitleText =
+                  "Produto: ${e.produto}\nEntregador: ${entregador.name}\nReceptor: ${receptor.name}";
                 }
 
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 6),
                   child: ListTile(
-                    leading: Icon(Icons.notification_important, color: cor),
+                    leading: Icon(Icons.assignment, color: cor),
                     title: Text("${e.status}: ${e.destino}"),
-                    subtitle: Text(
-                        "Produto: ${e.produto}"),
+                    subtitle: Text(subtitleText),
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              GestorEntregasPage(entregaSelecionadaId: e.id),
+                          builder: (_) => const GestorEntregasPage(),
                         ),
                       );
                     },

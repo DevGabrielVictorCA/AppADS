@@ -1,36 +1,88 @@
+import 'package:flutter/foundation.dart'; // para debugPrint
 import 'package:flutter/material.dart';
+import 'db_helper.dart';
+import 'models.dart';
 
 class EntregasProvider extends ChangeNotifier {
-  List<Map<String, String>> _entregas = [
-    {
-      "endereco": "Rua A, 123",
-      "destinatario": "João Silva",
-      "horario": "10:00",
-      "status": "Pendente",
-    },
-    {
-      "endereco": "Av. B, 456",
-      "destinatario": "Maria Souza",
-      "horario": "11:30",
-      "status": "Concluída",
-    },
-    {
-      "endereco": "Rua C, 789",
-      "destinatario": "Carlos Pereira",
-      "horario": "14:00",
-      "status": "Atrasada",
-    },
-  ];
+  final DBHelper _dbHelper = DBHelper();
 
-  List<Map<String, String>> get entregas => _entregas;
+  List<Entrega> _entregas = [];
 
-  void adicionarEntrega(Map<String, String> novaEntrega) {
-    _entregas.add(novaEntrega);
+  List<Entrega> get entregas => _entregas;
+
+  // --- CARREGAR ENTREGAS ---
+  Future<void> carregarEntregas() async {
+    _entregas = await _dbHelper.getEntregas();
     notifyListeners();
   }
 
-  void atualizarStatus(int index, String status) {
-    _entregas[index]['status'] = status;
+  Future<void> carregarEntregasDoEntregador(String email) async {
+    _entregas = await _dbHelper.getEntregasPorEntregador(email);
+    notifyListeners();
+  }
+
+  Future<void> carregarEntregasDoReceptor(String email) async {
+    _entregas = await _dbHelper.getEntregasPorReceptor(email);
+    notifyListeners();
+  }
+
+  // --- ADICIONAR / ATUALIZAR / DELETAR ---
+  Future<void> adicionarEntrega(Entrega e) async {
+    await _dbHelper.insertEntrega(e);
+    _entregas.add(e);
+    notifyListeners();
+  }
+
+  Future<void> atualizarEntrega(Entrega e) async {
+    await _dbHelper.updateEntrega(e);
+    final index = _entregas.indexWhere((ent) => ent.id == e.id);
+    if (index != -1) {
+      _entregas[index] = e;
+      notifyListeners();
+    }
+  }
+
+  Future<void> atualizarStatus(Entrega e, String novoStatus) async {
+    e.status = novoStatus;
+    if (novoStatus == "Concluída") e.concluida = true;
+    await _dbHelper.updateEntrega(e);
+    final index = _entregas.indexWhere((ent) => ent.id == e.id);
+    if (index != -1) {
+      _entregas[index] = e;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deletarEntrega(int id) async {
+    await _dbHelper.deleteEntrega(id);
+    _entregas.removeWhere((e) => e.id == id);
+    notifyListeners();
+  }
+
+  // --- FILTROS ---
+  List<Entrega> entregasDoEntregador(String email) {
+    return _entregas.where((e) => e.entregadorEmail == email).toList();
+  }
+
+  List<Entrega> entregasDoReceptor(String email) {
+    return _entregas.where((e) => e.receptorEmail == email).toList();
+  }
+
+  // --- REPORTAR PROBLEMA ---
+  Future<void> reportarProblema({
+    required Entrega entrega,
+    required List<String> motivos,
+    required String descricao,
+  }) async {
+    entrega.status = "Problema reportado";
+    entrega.motivos = motivos.join(", ");
+    entrega.descricao = descricao;
+    await _dbHelper.updateEntrega(entrega);
+
+    debugPrint("Problema reportado para entrega #${entrega.id}");
+    debugPrint("Motivos: ${entrega.motivos}");
+    debugPrint("Descrição: ${entrega.descricao}");
+
     notifyListeners();
   }
 }

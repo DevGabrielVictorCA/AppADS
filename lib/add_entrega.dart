@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'db_helper.dart';
 import 'models.dart';
-import 'package:intl/intl.dart';
+import 'entregas_provider.dart';
 
 class AddEntregaPage extends StatefulWidget {
   final Entrega? entrega;
@@ -27,9 +29,10 @@ class _AddEntregaPageState extends State<AddEntregaPage> {
   Receptor? receptorSelecionado;
 
   bool concluida = false;
-
   String? statusSelecionado;
   final List<String> opcoesStatus = ['Pendente', 'Atrasada', 'Concluída'];
+
+  bool carregandoUsuarios = true;
 
   @override
   void initState() {
@@ -64,7 +67,7 @@ class _AddEntregaPageState extends State<AddEntregaPage> {
       }
     }
 
-    setState(() {});
+    setState(() => carregandoUsuarios = false);
   }
 
   Future<void> _pickDateTime() async {
@@ -81,14 +84,12 @@ class _AddEntregaPageState extends State<AddEntregaPage> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
-
     if (date == null) return;
 
     TimeOfDay? time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(initialDate),
     );
-
     if (time == null) return;
 
     final dateTime = DateTime(date.year, date.month, date.day, time.hour, time.minute);
@@ -102,11 +103,13 @@ class _AddEntregaPageState extends State<AddEntregaPage> {
     } else {
       statusSelecionado = 'Pendente';
     }
+
     setState(() {});
   }
 
   Future<void> _saveEntrega() async {
     if (!_formKey.currentState!.validate()) return;
+
     if (entregadorSelecionado == null || receptorSelecionado == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Selecione entregador e receptor')),
@@ -114,31 +117,64 @@ class _AddEntregaPageState extends State<AddEntregaPage> {
       return;
     }
 
+    final provider = context.read<EntregasProvider>();
+
+    // Garante que email nunca será nulo
+    final entregadorEmail = entregadorSelecionado?.email ?? '';
+    final receptorEmail = receptorSelecionado?.email ?? '';
+
     final entrega = Entrega(
       id: widget.entrega?.id,
       produto: _produtoController.text,
       destino: _destinoController.text,
       entregador: entregadorSelecionado!.name,
+      entregadorEmail: entregadorEmail,
       receptor: receptorSelecionado!.name,
+      receptorEmail: receptorEmail,
       dataEntrega: _dataEntregaController.text,
       status: statusSelecionado ?? 'Pendente',
       concluida: concluida,
     );
 
-    if (widget.entrega == null) {
-      await dbHelper.insertEntrega(entrega);
-    } else {
-      await dbHelper.updateEntrega(entrega);
-    }
+    try {
+      // Debug detalhado
+      debugPrint('📝 Salvando entrega: ${entrega.toMap()}');
 
-    Navigator.of(context).pop(true);
+      if (widget.entrega == null) {
+        // INSERIR usando dbHelper local
+        final id = await dbHelper.insertEntrega(entrega);
+        entrega.id = id;
+        await provider.adicionarEntrega(entrega);
+        debugPrint('✅ Entrega inserida com sucesso: ID $id');
+      } else {
+        // ATUALIZAR usando dbHelper local
+        await dbHelper.updateEntrega(entrega);
+        await provider.atualizarEntrega(entrega);
+        debugPrint('✅ Entrega atualizada com sucesso: ID ${entrega.id}');
+      }
+
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erro ao salvar a entrega: $e")),
+      );
+      debugPrint("Erro ao salvar a entrega: $e");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.entrega == null ? 'Adicionar Entrega' : 'Editar Entrega'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          widget.entrega == null ? 'Adicionar Entrega' : 'Editar Entrega',
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: const Color(0xFF005050),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -160,12 +196,9 @@ class _AddEntregaPageState extends State<AddEntregaPage> {
               const SizedBox(height: 10),
               DropdownButtonFormField<Entregador>(
                 value: entregadorSelecionado,
-                items: entregadores.map((e) {
-                  return DropdownMenuItem(
-                    value: e,
-                    child: Text(e.name),
-                  );
-                }).toList(),
+                items: entregadores
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e.name)))
+                    .toList(),
                 onChanged: (e) => setState(() => entregadorSelecionado = e),
                 decoration: const InputDecoration(labelText: 'Entregador'),
                 validator: (v) => v == null ? 'Selecione um entregador' : null,
@@ -173,12 +206,9 @@ class _AddEntregaPageState extends State<AddEntregaPage> {
               const SizedBox(height: 10),
               DropdownButtonFormField<Receptor>(
                 value: receptorSelecionado,
-                items: receptores.map((r) {
-                  return DropdownMenuItem(
-                    value: r,
-                    child: Text(r.name),
-                  );
-                }).toList(),
+                items: receptores
+                    .map((r) => DropdownMenuItem(value: r, child: Text(r.name)))
+                    .toList(),
                 onChanged: (r) => setState(() => receptorSelecionado = r),
                 decoration: const InputDecoration(labelText: 'Receptor'),
                 validator: (v) => v == null ? 'Selecione um receptor' : null,
@@ -198,7 +228,22 @@ class _AddEntregaPageState extends State<AddEntregaPage> {
               DropdownButtonFormField<String>(
                 value: statusSelecionado,
                 items: opcoesStatus.map((s) {
-                  return DropdownMenuItem(value: s, child: Text(s));
+                  Color cor;
+                  switch (s) {
+                    case 'Concluída':
+                      cor = Colors.green;
+                      break;
+                    case 'Atrasada':
+                      cor = Colors.red;
+                      break;
+                    case 'Pendente':
+                    default:
+                      cor = Colors.orange;
+                  }
+                  return DropdownMenuItem(
+                    value: s,
+                    child: Text(s, style: TextStyle(color: cor)),
+                  );
                 }).toList(),
                 onChanged: (s) => setState(() => statusSelecionado = s),
                 decoration: const InputDecoration(labelText: 'Status'),
@@ -206,8 +251,10 @@ class _AddEntregaPageState extends State<AddEntregaPage> {
               ),
               const SizedBox(height: 35),
               ElevatedButton(
-                onPressed: _saveEntrega,
-                child: const Text('Salvar'),
+                onPressed: carregandoUsuarios ? null : _saveEntrega,
+                child: carregandoUsuarios
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Salvar'),
               ),
             ],
           ),
