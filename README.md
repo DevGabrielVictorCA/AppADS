@@ -138,7 +138,7 @@ Contém as páginas principais de cada tipo de usuário:
 1. Clonar o repositório:
 
 ```bash
-git clone <URL_DO_REPOSITORIO>
+git clone https://github.com/DevGabrielVictorCA/AppADS.git
 ```
 
 2. Abrir no **VS Code** ou **Android Studio**.
