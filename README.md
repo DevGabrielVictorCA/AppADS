@@ -149,7 +149,8 @@ flutter build apk --release
 ---
 
 ## 📲 Instalação
-O arquivo de instalação (.apk) está disponível no **link** abaixo:
+O arquivo de instalação (.apk) está disponível no **link** abaixo
+<br>
 [Baixar APK - NUMERODERA_app](https://drive.google.com/drive/folders/1GRjiTVj5SeCedAhp7mAcaKxNR0EcGqrh?usp=sharing)
 
 
