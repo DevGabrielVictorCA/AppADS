@@ -26,20 +26,20 @@ O aplicativo possui **sistema de login e cadastro local**, com dados armazenados
 
 - Cadastro e login de **Gestor, Entregador e Receptor**.
 - Gestão de entregas (criação, atribuição, atualização de status).
-- Controle de visualização de entregas de acordo com perfil do usuário.
+- Controle de visualização de entregas de acordo com o perfil do usuário.
 - Relatórios de desempenho (placeholder).
-- Persistência local com SQLite para usuários e entregas.
+- Persistência local com SQLite.
 - Interface responsiva usando Flutter e widgets nativos.
 
 ---
 
 ## 👥 Stakeholders
 
-- **Gestor**: administrador do sistema, responsável pelo planejamento das entregas.
-- **Entregador**: recebe entregas atribuídas, atualiza status e reporta problemas.
-- **Receptor**: acompanha suas entregas e verifica status.
-- **Professor / Avaliador**: analisa a entrega do projeto acadêmico.
-- **Equipe de desenvolvimento (aluno)**: responsável por implementar, testar e documentar o app.
+- **Gestor:** administrador do sistema, responsável pelo planejamento das entregas.
+- **Entregador:** recebe entregas atribuídas, atualiza status e reporta problemas.
+- **Receptor:** acompanha suas entregas e verifica status.
+- **Professor / Avaliador:** analisa o projeto acadêmico.
+- **Aluno (Desenvolvedor):** responsável por implementar, testar e documentar o app.
 
 ---
 
@@ -47,93 +47,79 @@ O aplicativo possui **sistema de login e cadastro local**, com dados armazenados
 
 ### 1. `main.dart`
 - Ponto de entrada do app.
-- Inicializa banco de dados (`sqflite_common_ffi`) e Provider (`EntregasProvider`).
+- Inicializa o banco (`sqflite_common_ffi`) e o `EntregasProvider`.
 - Tela inicial: `LoginPage`.
 
 ### 2. `login_page.dart`
-- Tela de login com campos de **usuário** e **senha**.
-- Link para cadastro (`cadastro_page.dart`).
-- Após autenticação, redireciona para `WelcomePage` com `nomeDoUsuario` e `tipoUsuario`.
+- Tela de login com **usuário e senha**.
+- Redireciona para `WelcomePage` conforme o tipo de usuário.
 
 ### 3. `cadastro_page.dart`
 - Registro de novos usuários.
-- Campos: nome, e-mail, senha, tipo de usuário.
-- Salva usuário no banco local.
+- Campos: nome, e-mail, senha e tipo de usuário.
+- Salva os dados no SQLite local.
 
 ### 4. `welcome_page.dart`
-Contém as páginas principais de cada tipo de usuário:
+Reúne as telas específicas:
 
 #### 🟩 GestorPage
 - Saudação personalizada.
-- Menu em **cards**: Entregas, Entregadores, Relatórios, Notificações / Receptores, Configuração e Sair.
-- Botões usam **MenuButton customizado**.
+- Menu com **cards**: Entregas, Entregadores, Relatórios, Receptores, Configurações e Sair.
 
 #### 🟦 EntregadorPage
-- Estatísticas de entregas via `EntregasProvider`.
-- Lista entregas do entregador.
-- Cada entrega exibe: endereço, status, destinatário, horário e botões “Detalhes”, “Concluir”, “Problemas”.
-- Botão “Concluir” atualiza status.
-- Logout incluso.
+- Mostra entregas atribuídas.
+- Permite atualizar o status e marcar problemas.
 
 #### 🟨 ReceptorPage
-- Exibe apenas entregas destinadas ao receptor.
-- Sem botões de atualização de status.
-- Pode incluir botão “Confirmar recebimento”.
+- Exibe entregas destinadas ao receptor.
+- Pode confirmar recebimento.
 
 ---
 
 ## 📦 Outros Arquivos Importantes
 
 ### `entregas_provider.dart`
-
-* `ChangeNotifier` que gerencia a lista de entregas.
-* Métodos: `adicionarEntrega()`, `atualizarStatus()`, `notificarListeners()`.
-* Usado por gestores e entregadores para atualizar a UI.
+- Classe `ChangeNotifier` que gerencia a lista de entregas.
+- Métodos principais: `adicionarEntrega()`, `atualizarStatus()`, `notificarListeners()`.
 
 ### `gestor_entregas.dart`
-
-* Tela para o gestor criar e atribuir entregas.
-* Campos: entregador, receptor, endereço, data e hora.
-* Salva entrega no `EntregasProvider`.
+- Tela para o gestor criar e atribuir novas entregas.
 
 ### `entregadores_page.dart`
-
-* Lista entregadores registrados.
-* Botão “Adicionar Entregador” abre formulário simples.
+- Lista entregadores e permite adicionar novos.
 
 ### `receptores_page.dart`
-
-* Lista receptores registrados.
-* Cadastro e visualização local.
+- Lista receptores e permite cadastrar novos.
 
 ### `relatorios_gestor.dart`
-
-* Placeholder para **relatórios de desempenho**.
-* Métricas previstas: total de entregas, percentual concluídas, tempo médio, entregadores mais ativos.
+- Placeholder para **relatórios** (entregas concluídas, tempo médio, desempenho).
 
 ---
 
-## 🔗 Integração Planejada
+## 🔗 Integrações e Recursos Técnicos
 
-* **Provider**: sincroniza dados entre Gestor, Entregador e Receptor.
-* **SQLite**: persistência de usuários e entregas.
-* **Login funcional**: validação e redirecionamento conforme perfil.
-* **Controle de acesso**: cada perfil visualiza apenas o que lhe compete.
+- **Provider:** gerenciamento de estado entre telas.
+- **SQLite (sqflite_common_ffi):** persistência local.
+- **Login funcional:** redirecionamento conforme o perfil.
+- **Controle de acesso:** cada usuário visualiza apenas o que lhe compete.
+- **Design Material:** uso de Scaffold, AppBar, Cards e ListView.
 
 ---
 
 ## 🧠 Resumo Técnico
 
-* **Linguagem:** Dart (Flutter)
-* **Gerência de estado:** Provider
-* **Banco de dados:** SQLite (`sqflite_common_ffi`)
-* **Navegação:** `Navigator.push`, `Navigator.pop`, `MaterialPageRoute`
-* **Design:** Scaffold, AppBar, Card, Wrap, ListView.builder
-* **Perfis de usuários:** Gestor, Entregador, Receptor
+| Recurso | Descrição |
+|----------|------------|
+| **Linguagem** | Dart (Flutter) |
+| **Gerência de estado** | Provider |
+| **Banco de dados** | SQLite (`sqflite_common_ffi`) |
+| **Navegação** | `Navigator.push` / `pop` / `MaterialPageRoute` |
+| **Perfis de usuários** | Gestor, Entregador, Receptor |
+| **Plataforma** | Android (APK Release) |
 
 ---
 
-## ⚙ Como Executar
+## ⚙ Como Executar o Projeto (Código-Fonte)
 
 1. Clonar o repositório:
 
@@ -160,11 +146,20 @@ flutter run
 ```bash
 flutter build apk --release
 ```
-
 ---
+
+## 📲 Instalação
+O arquivo de instalação (.apk) está disponível no **link** abaixo:
+[Baixar APK - NUMERODERA_app](https://drive.google.com/drive/folders/1GRjiTVj5SeCedAhp7mAcaKxNR0EcGqrh?usp=sharing)
+
 
 ## 📚 Referências e Bibliotecas
 
 * [Flutter](https://flutter.dev/)
 * [Provider](https://pub.dev/packages/provider)
 * [SQLite / sqflite_common_ffi](https://pub.dev/packages/sqflite_common_ffi)
+
+## 🧩 Observações Finais
+
+Este projeto foi desenvolvido para **fins acadêmicos**, simulando um sistema de entregas com múltiplos perfis de usuários e persistência local.
+O layout original deve ser mantido — qualquer modificação deve respeitar as diretrizes de design previamente definidas.
