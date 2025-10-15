@@ -80,14 +80,6 @@ Contém as páginas principais de cada tipo de usuário:
 - Sem botões de atualização de status.
 - Pode incluir botão “Confirmar recebimento”.
 
-#### 🔹 WelcomePage
-- Roteamento centralizado:
-```dart
-if (tipoUsuario == "Gestor") return GestorPage(...);
-else if (tipoUsuario == "Entregador") return EntregadorPage(...);
-else return ReceptorPage(...);
-```
-
 ---
 
 ## 📦 Outros Arquivos Importantes
@@ -148,7 +140,6 @@ else return ReceptorPage(...);
 * **Navegação:** `Navigator.push`, `Navigator.pop`, `MaterialPageRoute`
 * **Design:** Scaffold, AppBar, Card, Wrap, ListView.builder
 * **Perfis de usuários:** Gestor, Entregador, Receptor
-* **Próxima etapa:** Unificação de dados entre Gestor ↔ Entregador ↔ Receptor
 
 ---
 
